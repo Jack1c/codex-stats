@@ -174,8 +174,13 @@ func money(_ value: Double) -> String {
     String(format: "%.2f", value)
 }
 
-// 金额只显示总额（高峰/空闲仍按官方两档价格分别计价，只是不再拆开展示）
+// 今日 / 一周的金额文案：总额 + 高峰/空闲拆分
 func costText(_ cost: Cost) -> String {
+    "¥\(money(cost.total))  高峰 ¥\(money(cost.peak)) · 空闲 ¥\(money(cost.offpeak))"
+}
+
+// 只要总额，用于今日会话 Top 5
+func costTotalText(_ cost: Cost) -> String {
     "¥\(money(cost.total))"
 }
 
@@ -448,15 +453,15 @@ func dumpText() -> String {
         for item in source.todayByModel {
             lines.append("  \(item.model)  输入 \(tokens(item.totals.input))  输出 \(tokens(item.totals.output))  "
                 + "缓存 \(tokens(item.totals.cached))  合计 \(tokens(item.totals.total))  "
-                + "金额 ¥\(money(item.cost.total))")
+                + "高峰 ¥\(money(item.cost.peak))  空闲 ¥\(money(item.cost.offpeak))")
         }
         lines.append("【\(name)】一周汇总（近 7 天，共 \(tokens(source.weekTotalTokens))）  \(costText(source.weekCost))")
         for item in source.weekByModel {
             lines.append("  \(item.model)  输入 \(tokens(item.totals.input))  输出 \(tokens(item.totals.output))  "
                 + "缓存 \(tokens(item.totals.cached))  合计 \(tokens(item.totals.total))  "
-                + "金额 ¥\(money(item.cost.total))")
+                + "高峰 ¥\(money(item.cost.peak))  空闲 ¥\(money(item.cost.offpeak))")
         }
-        lines.append("【\(name)】今日会话 Top 5（按总 token 倒序）  \(costText(source.topSessionsCost))")
+        lines.append("【\(name)】今日会话 Top 5（按总 token 倒序）  \(costTotalText(source.topSessionsCost))")
         for (index, item) in source.todayTopSessions.enumerated() {
             lines.append("  \(index + 1). \(item.name)  输入 \(tokens(item.totals.input))  "
                 + "输出 \(tokens(item.totals.output))  缓存 \(tokens(item.totals.cached))  合计 \(tokens(item.totals.total))"
@@ -607,10 +612,10 @@ struct SourceBlock<Trailing: View>: View {
                     Text("今日暂无数据").font(.system(size: size.title)).foregroundStyle(.secondary)
                 } else {
                     StatsTable(
-                        headers: ["模型", "输入", "输出", "缓存", "金额¥"],
+                        headers: ["模型", "输入", "输出", "缓存", "高峰¥", "空闲¥"],
                         rows: source.todayByModel.map {
                             [$0.model, tokens($0.totals.input), tokens($0.totals.output), tokens($0.totals.cached),
-                             money($0.cost.total)]
+                             money($0.cost.peak), money($0.cost.offpeak)]
                         },
                         firstColumnWidth: size.modelColumn,
                         size: size
@@ -625,10 +630,10 @@ struct SourceBlock<Trailing: View>: View {
                     Text("近 7 天暂无数据").font(.system(size: size.title)).foregroundStyle(.secondary)
                 } else {
                     StatsTable(
-                        headers: ["模型", "输入", "输出", "缓存", "金额¥"],
+                        headers: ["模型", "输入", "输出", "缓存", "高峰¥", "空闲¥"],
                         rows: source.weekByModel.map {
                             [$0.model, tokens($0.totals.input), tokens($0.totals.output), tokens($0.totals.cached),
-                             money($0.cost.total)]
+                             money($0.cost.peak), money($0.cost.offpeak)]
                         },
                         firstColumnWidth: size.modelColumn,
                         size: size
@@ -637,7 +642,7 @@ struct SourceBlock<Trailing: View>: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("今日会话 Top 5  \(costText(source.topSessionsCost))")
+                Text("今日会话 Top 5  \(costTotalText(source.topSessionsCost))")
                     .font(.system(size: size.title, weight: .bold))
                 if source.todayTopSessions.isEmpty {
                     Text("今日暂无数据").font(.system(size: size.title)).foregroundStyle(.secondary)

@@ -4,6 +4,7 @@
 
 import SwiftUI
 import Foundation
+import AppKit
 
 let sessionsRoot = NSString(string: "~/.codex/sessions").expandingTildeInPath
 let sessionIndexFile = NSString(string: "~/.codex/session_index.jsonl").expandingTildeInPath
@@ -575,10 +576,24 @@ struct Panel: View {
         .frame(width: 132)
     }
 
+    private var quitButton: some View {
+        Button {
+            NSApplication.shared.terminate(nil)
+        } label: {
+            Image(systemName: "power")
+                .font(.system(size: size.title))
+        }
+        .buttonStyle(.plain)
+        .help("退出 CodexStats")
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SourceBlock(name: "Codex", source: snapshot.codex, size: size) {
-                fontPicker
+                HStack(spacing: 12) {
+                    fontPicker
+                    quitButton
+                }
             }
             Divider()
             SourceBlock(name: "Claude", source: snapshot.claude, size: size) {
